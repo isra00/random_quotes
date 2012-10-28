@@ -1,0 +1,99 @@
+<?php
+
+/**
+ * @author Israel Viana
+ */
+
+function random_quotes_block_info() {
+  
+  $blocks = array();
+    
+  $blocks['random_quotes'] = array(
+    'info' => t('Random quotes'),
+    'cache' => DRUPAL_CACHE_PER_ROLE
+  );
+  
+  return $blocks;
+}
+
+
+function random_quotes_block_view($delta = '') {
+
+    global $language_content;
+    $lang_id = $language_content->language;
+    
+    $bodies = explode("\n", variable_get("random_quotes_bodies_$lang_id", ''));
+    $authors = explode("\n", variable_get("random_quotes_authors_$lang_id", ''));
+    
+    $quotes = array();
+    
+    //There can be more bodies than authors, but not the opposite.
+    for ($i = 0; $i < count($bodies); $i++) {
+        $author = isset($authors[$i]) ? $authors[$i] : '';
+        $quotes[] = array($bodies[$i], $author);
+    }
+
+    $quote = $quotes[rand(0, count($quotes)-1)];
+    
+    /** 
+     * @todo Hacer theme-able en lugar de poner HTML aquí abajo
+     */
+    $markup = <<<HTML
+            <div class="sidebar-quotes">
+                <blockquote>{$quote[0]}</blockquote>
+                <small>{$quote[1]}</small>
+            </div>
+HTML;
+
+    $block['content'] = array('#markup' => $markup);
+    $block['subject'] = '';
+
+    return $block;
+}
+
+function random_quotes_block_configure($delta = '') {
+    $form = array();
+    
+    $languages = language_list();
+    
+    foreach ($languages as $lang_id=>$lang) {
+        $form[$lang_id] = array(
+            '#type' => 'fieldset',
+            '#title' => $lang->native . ' (' . t($lang->name) . ')',
+            '#tree' => TRUE,
+        );
+    
+        $form[$lang_id]['bodies'] = array(
+            '#type' => 'textarea',
+            '#title' => t('Type the quotes content, one per line'),
+            '#default_value' => variable_get("random_quotes_bodies_$lang_id", ''),
+            '#cols' => 60,
+            '#rows' => 5,
+        );
+    
+        $form[$lang_id]['authors'] = array(
+            '#type' => 'textarea',
+            '#title' => t('Type the authors of the quotes above, one per line'),
+            '#default_value' => variable_get("random_quotes_authors_$lang_id", ''),
+            '#cols' => 60,
+            '#rows' => 5,
+        );
+    }
+    
+    return $form;
+}
+
+
+function random_quotes_block_save($delta = '', $edit = array()) {
+ 
+    $languages = language_list();
+    
+    foreach ($languages as $lang_id=>$lang) {
+        if (isset($edit[$lang_id]['bodies'])) {
+            variable_set("random_quotes_bodies_$lang_id", $edit[$lang_id]['bodies']);
+        }
+        if (isset($edit[$lang_id]['authors'])) {
+            variable_set("random_quotes_authors_$lang_id", $edit[$lang_id]['authors']);
+        }
+    }
+}
