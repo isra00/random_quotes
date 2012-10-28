@@ -1,7 +1,10 @@
 <?php
 
 /**
+ * A Drupal block that displays random quotes. Supports i18n.
+ *
  * @author Israel Viana
+ * @license http://www.gnu.org/copyleft/gpl.html
  */
 
 function random_quotes_block_info() {
